@@ -78,11 +78,12 @@ $current_page = isset($active_menu) ? $active_menu : ($this->uri->segment(2) ? $
     </nav>
 
     <!-- Footer / Logout -->
-    <div class="p-4 border-t border-brand-medium/30">
-        <a href="<?= base_url('auth/logout') ?>" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-brand-red hover:bg-brand-red/10 transition-all">
-            <i class="bi bi-box-arrow-left text-lg"></i>
-            <span>Keluar / Logout</span>
-        </a>
-    </div>
+	<div class="p-4 border-t border-brand-medium/30">
+		<a href="<?= base_url('auth/logout') ?>" 
+		class="flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all shadow-md">
+			<i class="bi bi-box-arrow-right text-lg"></i>
+			<span>Logout</span>
+		</a>
+	</div>
 
 </aside>
