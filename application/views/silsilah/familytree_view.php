@@ -27,6 +27,6 @@
     <div class="ip-name" id="ipName"></div>
     <div class="ip-lines" id="ipLines"></div>
   </div>
-<script src="<?php echo base_url('assets/js/tree.js'); ?>"></script>
+<script src="<?php echo base_url('assets/js/tree.js'); ?>" data-url="<?php echo site_url('familytree/get_family_tree'); ?>"></script>
 </body>
 </html>

@@ -13,7 +13,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="relative py-2 hover:text-teal-600 transition-colors duration-300 group">
+                <a href="<?= base_url('Wasiat') ?>" class="relative py-2 hover:text-teal-600 transition-colors duration-300 group">
                     Wasiat 
                     <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-600 transition-all duration-300 group-hover:w-full"></span>
                 </a>
@@ -25,7 +25,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="relative py-2 hover:text-teal-600 transition-colors duration-300 group">
+                <a href="<?= base_url('Familytree') ?>" class="relative py-2 hover:text-teal-600 transition-colors duration-300 group">
                     Data Keluarga 
                     <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-600 transition-all duration-300 group-hover:w-full"></span>
                 </a>

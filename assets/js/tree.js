@@ -1,7 +1,10 @@
 const treeContainer = document.getElementById('tree');
 console.log("Tree.js sudah dimuat!");
 
-fetch('/samhudi/samhudi/index.php/familytree/get_family_tree')
+const scriptTag = document.currentScript || document.querySelector('script[src*="tree.js"]');
+const fetchUrl = (scriptTag && scriptTag.getAttribute('data-url')) || 'familytree/get_family_tree';
+
+fetch(fetchUrl)
   .then(res => res.json())
   .then(data => {
     treeContainer.innerHTML = '';
