@@ -2,122 +2,325 @@
 /**
  * @var object $forum
  * @var array $comments
+ * @var object $user
  */
 ?>
-<section class="max-w-4xl mx-auto px-6 py-10">
-    <div class="bg-teal-900 rounded-3xl overflow-hidden shadow-lg">
 
-        <div class="p-8 border-b border-teal-700/50">
-            <a href="<?= base_url('forum') ?>" class="text-teal-300 hover:text-white text-sm font-body inline-flex items-center gap-1 mb-6 transition">
-                <i class="ti ti-arrow-left"></i> Kembali ke Forum
-            </a>
+<!-- Custom Style for Forum Diskusi View -->
+<style>
+    /* Color Palette */
+    :root {
+        --color-dark-teal: #274D4F;
+        --color-light-teal: #377C80;
+        --color-orange-accent: #E49438;
+        --color-bg-main: #1F3637;
+    }
+    
+    body {
+        background-color: var(--color-bg-main);
+        color: #FFFFFF;
+    }
 
-            <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-full bg-teal-600 flex-shrink-0 flex items-center justify-center text-white font-display font-semibold text-base">
-                    <?= strtoupper(substr($forum->author_name ?? 'A', 0, 1)) ?>
-                </div>
-                <div>
-                    <p class="font-display font-semibold text-white text-sm">
-                        <?= htmlspecialchars($forum->author_name ?? 'Anonim') ?>
-                        <span class="text-teal-300 font-body font-normal text-xs ml-2"><?= $forum->created_at ?></span>
-                    </p>
-                    <h1 class="font-display font-bold text-white text-2xl mt-1 mb-3">
-                        <?= htmlspecialchars($forum->title) ?>
-                    </h1>
-                    <p class="font-body text-teal-100 text-sm leading-relaxed">
-                        <?= nl2br(htmlspecialchars($forum->content)) ?>
-                    </p>
+    .forum-container {
+        background-color: var(--color-bg-main);
+        min-height: 100vh;
+    }
+
+    /* Custom scrollbar for comments list */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--color-light-teal);
+        border-radius: 3px;
+    }
+</style>
+
+<div class="forum-container font-display pb-12">
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <!-- Toast Notification Container -->
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            <div id="actionToast" class="toast align-items-center text-white bg-[#377C80] border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body" id="toastMessage">
+                        Notifikasi
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
         </div>
 
-        <div class="p-6 space-y-5 max-h-[400px] overflow-y-auto">
-            <h3 class="font-display font-semibold text-white text-sm mb-2">
-                Komentar (<?= count($comments) ?>)
-            </h3>
-
-            <?php if (empty($comments)): ?>
-                <p class="text-teal-200/70 text-sm text-center py-6">Belum ada komentar.</p>
-            <?php else: ?>
-                <?php foreach ($comments as $comment): ?>
-                    <div class="flex items-start gap-4">
-                        <div class="w-11 h-11 rounded-full bg-teal-600 flex-shrink-0 flex items-center justify-center text-white font-display font-semibold text-sm">
-                            <?= strtoupper(substr($comment->author_name ?? 'A', 0, 1)) ?>
+        <div class="flex flex-col gap-6">
+            <!-- Main Thread Card -->
+            <div class="bg-[#274D4F]/50 rounded-3xl overflow-hidden border border-teal-800/30 p-6 sm:p-8 flex flex-col gap-6">
+                <!-- Author & Time -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full overflow-hidden bg-teal-800 border-2 border-[#377C80] flex-shrink-0">
+                            <img src="<?= !empty($forum->author_avatar) ? base_url($forum->author_avatar) : base_url('assets/images/photo.png') ?>" 
+                                 alt="Avatar" class="w-full h-full object-cover">
                         </div>
-
-                        <div class="flex-1">
-                            <p class="font-display font-semibold text-white text-sm">
-                                <?= htmlspecialchars($comment->author_name ?? 'Anonim') ?>
+                        <div>
+                            <h4 class="text-sm font-bold text-white"><?= htmlspecialchars($forum->author_name ?? 'Anggota Keluarga') ?></h4>
+                            <p class="text-xs text-white/50 mt-0.5">
+                                <?= date('d M Y, H.i', strtotime($forum->created_at)) ?>
                             </p>
-                            <p class="font-body text-teal-100 text-sm mt-0.5">
-                                <?= nl2br(htmlspecialchars($comment->comment)) ?>
-                            </p>
-                            <button type="button"
-                                    onclick="toggleReply(<?= $comment->id ?>)"
-                                    class="font-body text-teal-300 text-sm hover:text-white transition mt-1">
-                                Balas
-                            </button>
-
-                            <div id="reply-form-<?= $comment->id ?>" class="hidden mt-3">
-                                <?= form_open('forum/comment/' . $forum->id) ?>
-                                    <input type="hidden" name="parent_id" value="<?= $comment->id ?>">
-                                    <div class="flex items-center gap-2">
-                                        <input type="text" name="comment" placeholder="Tulis balasan..."
-                                               class="flex-1 bg-teal-800/60 text-white placeholder-teal-300 text-sm rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-600">
-                                        <button type="submit"
-                                                class="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white hover:bg-teal-500 transition flex-shrink-0">
-                                            <i class="ti ti-send text-sm"></i>
-                                        </button>
-                                    </div>
-                                <?= form_close() ?>
-                            </div>
-
-                            <?php if (!empty($comment->replies)): ?>
-                                <div class="mt-4 space-y-4 pl-4 border-l border-teal-700/50">
-                                    <?php foreach ($comment->replies as $reply): ?>
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-9 h-9 rounded-full bg-teal-700 flex-shrink-0 flex items-center justify-center text-white font-display font-semibold text-xs">
-                                                <?= strtoupper(substr($reply->author_name ?? 'A', 0, 1)) ?>
-                                            </div>
-                                            <div>
-                                                <p class="font-display font-semibold text-white text-xs">
-                                                    <?= htmlspecialchars($reply->author_name ?? 'Anonim') ?>
-                                                </p>
-                                                <p class="font-body text-teal-100 text-sm mt-0.5">
-                                                    <?= nl2br(htmlspecialchars($reply->comment)) ?>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
+                </div>
 
-        <!-- KOLOM KETIK KOMENTAR BARU -->
-        <?= form_open('forum/comment/' . $forum->id) ?>
-            <div class="p-5 border-t border-teal-700/50">
-                <?= form_error('comment', '<p class="text-red-400 text-xs mb-2">', '</p>') ?>
-                <div class="flex items-center gap-3 bg-teal-800/60 rounded-full px-5 py-3">
-                    <input type="text" name="comment" placeholder="Ketik..."
-                           class="flex-1 bg-transparent text-white placeholder-teal-300 text-sm focus:outline-none">
-                    <button type="submit"
-                            class="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white hover:bg-teal-500 transition flex-shrink-0">
-                        <i class="ti ti-send text-base"></i>
+                <!-- Thread Title & Content -->
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white leading-tight">
+                        <?= htmlspecialchars($forum->title) ?>
+                    </h1>
+                    <p class="text-sm text-white/80 leading-relaxed mt-4 whitespace-pre-line">
+                        <?= htmlspecialchars($forum->content) ?>
+                    </p>
+                </div>
+
+                <!-- Attached Media -->
+                <?php if (!empty($forum->media_url)): ?>
+                    <div class="rounded-2xl overflow-hidden max-h-[500px] w-full border border-teal-800/30">
+                        <?php if ($forum->media_type === 'image'): ?>
+                            <img src="<?= base_url($forum->media_url) ?>" alt="Post media" class="w-full h-full object-cover max-h-[500px]">
+                        <?php elseif ($forum->media_type === 'video'): ?>
+                            <video src="<?= base_url($forum->media_url) ?>" controls class="w-full h-full object-cover max-h-[500px]"></video>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Action row -->
+                <div class="flex items-center justify-between border-t border-b border-teal-800/30 py-4 text-xs font-semibold text-white/70">
+                    <!-- Like -->
+                    <button onclick="likePostDetail(<?= $forum->id ?>, this)" 
+                            class="flex items-center gap-1.5 py-1.5 px-4 rounded-full hover:bg-white/5 transition-all text-white/70 <?= $forum->liked_by_user ? 'text-red-400 font-bold' : '' ?>">
+                        <i class="<?= $forum->liked_by_user ? 'bi bi-heart-fill text-red-500' : 'bi bi-heart' ?>"></i> 
+                        <span class="like-count"><?= $forum->likes_count ?> Likes</span>
+                    </button>
+
+                    <!-- Saves -->
+                    <button onclick="savePostDetail(<?= $forum->id ?>, this)" 
+                            class="flex items-center gap-1.5 py-1.5 px-4 rounded-full hover:bg-white/5 transition-all text-white/70 <?= $forum->saved_by_user ? 'text-[#E49438] font-bold' : '' ?>">
+                        <i class="<?= $forum->saved_by_user ? 'bi bi-bookmark-fill text-[#E49438]' : 'bi bi-bookmark' ?>"></i> 
+                        <span><?= $forum->saved_by_user ? 'Tersimpan' : 'Simpan' ?></span>
+                    </button>
+
+                    <!-- Share -->
+                    <button onclick="sharePostDetail('<?= base_url('forum/view/' . $forum->id) ?>')" 
+                            class="flex items-center gap-1.5 py-1.5 px-4 rounded-full hover:bg-white/5 transition-all text-white/70">
+                        <i class="bi bi-share"></i> Bagikan
                     </button>
                 </div>
+
+                <!-- Comments List Title -->
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="bi bi-chat-left-text text-[#E49438]"></i> Komentar (<?= count($comments) ?>)
+                    </h3>
+                </div>
+
+                <!-- Comments List Container -->
+                <div class="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    <?php if (empty($comments)): ?>
+                        <p class="text-white/40 text-sm text-center py-6">Belum ada komentar. Tulis komentar pertama!</p>
+                    <?php else: ?>
+                        <?php foreach ($comments as $comment): ?>
+                            <!-- Comment Item -->
+                            <div class="flex items-start gap-3 bg-[#1F3637]/40 p-4 rounded-2xl border border-teal-800/20">
+                                <div class="w-9 h-9 rounded-full overflow-hidden bg-teal-800 flex-shrink-0">
+                                    <img src="<?= !empty($comment->author_avatar) ? base_url($comment->author_avatar) : base_url('assets/images/photo.png') ?>" 
+                                         alt="Avatar" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <h5 class="text-xs font-bold text-white"><?= htmlspecialchars($comment->author_name ?? 'Anggota Keluarga') ?></h5>
+                                        <span class="text-[10px] text-white/40"><?= time_elapsed_string_view($comment->created_at) ?></span>
+                                    </div>
+                                    <p class="text-xs text-white/80 mt-1 leading-relaxed whitespace-pre-line">
+                                        <?= htmlspecialchars($comment->comment) ?>
+                                    </p>
+                                    
+                                    <!-- Comment Action (Reply Trigger, fully inline) -->
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <button onclick="toggleReplyForm(<?= $comment->id ?>)" class="text-[10px] font-bold text-teal-300 hover:text-white transition-all flex items-center gap-1">
+                                            <i class="bi bi-reply"></i> Balas
+                                        </button>
+                                    </div>
+
+                                    <!-- Inline Reply Form -->
+                                    <div id="replyFormContainer_<?= $comment->id ?>" class="hidden mt-3">
+                                        <?= form_open('forum/comment/' . $forum->id) ?>
+                                            <input type="hidden" name="parent_id" value="<?= $comment->id ?>">
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" name="comment" placeholder="Ketik balasan..." required autocomplete="off"
+                                                       class="flex-1 bg-[#1F3637] text-white placeholder-teal-300/30 text-xs rounded-full py-2 px-4 focus:outline-none focus:ring-1 focus:ring-[#377C80] border border-teal-800/40">
+                                                <button type="submit" class="w-8 h-8 rounded-full bg-[#377C80] hover:bg-teal-700 text-white flex items-center justify-center flex-shrink-0 transition-all">
+                                                    <i class="bi bi-send-fill text-xs"></i>
+                                                </button>
+                                            </div>
+                                        <?= form_close() ?>
+                                    </div>
+
+                                    <!-- Nesting Replies List -->
+                                    <?php if (!empty($comment->replies)): ?>
+                                        <div class="mt-4 pl-4 border-l-2 border-teal-800/50 space-y-4">
+                                            <?php foreach ($comment->replies as $reply): ?>
+                                                <div class="flex items-start gap-3 bg-[#1F3637]/20 p-3 rounded-xl">
+                                                    <div class="w-7 h-7 rounded-full overflow-hidden bg-teal-800 flex-shrink-0">
+                                                        <img src="<?= !empty($reply->author_avatar) ? base_url($reply->author_avatar) : base_url('assets/images/photo.png') ?>" 
+                                                             alt="Avatar" class="w-full h-full object-cover">
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="flex items-center justify-between gap-2">
+                                                            <h6 class="text-[11px] font-bold text-white"><?= htmlspecialchars($reply->author_name ?? 'Anggota Keluarga') ?></h6>
+                                                            <span class="text-[9px] text-white/40"><?= time_elapsed_string_view($reply->created_at) ?></span>
+                                                        </div>
+                                                        <p class="text-xs text-white/70 mt-1 leading-relaxed whitespace-pre-line">
+                                                            <?= htmlspecialchars($reply->comment) ?>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Main Add Comment Form (Bottom of View) -->
+                <div class="border-t border-teal-800/30 pt-6">
+                    <?= form_open('forum/comment/' . $forum->id) ?>
+                        <div class="flex items-center gap-3 bg-[#1b3435] rounded-full px-5 py-3 border border-teal-800/30">
+                            <input type="text" name="comment" placeholder="Ketik komentar..." required autocomplete="off"
+                                   class="flex-1 bg-transparent text-white placeholder-teal-300/40 text-xs focus:outline-none">
+                            <button type="submit" class="w-9 h-9 rounded-full bg-[#377C80] hover:bg-teal-700 text-white flex items-center justify-center flex-shrink-0 shadow-md transition-all">
+                                <i class="bi bi-send-fill text-sm"></i>
+                            </button>
+                        </div>
+                    <?= form_close() ?>
+                </div>
             </div>
-        <?= form_close() ?>
+        </div>
+    </main>
+</div>
 
-    </div>
-</section>
-
+<!-- SCRIPTS FOR FORUM VIEW -->
 <script>
-    function toggleReply(id) {
-        var form = document.getElementById('reply-form-' + id);
+    // Toast alert helper
+    function showToast(message) {
+        const toastEl = document.getElementById('actionToast');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.innerText = message;
+        const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+        toast.show();
+    }
+
+    // Toggle sub-reply inputs
+    function toggleReplyForm(commentId) {
+        const form = document.getElementById('replyFormContainer_' + commentId);
         form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+            form.querySelector('input[name="comment"]').focus();
+        }
+    }
+
+    // Ajax Like Post
+    function likePostDetail(id, btn) {
+        fetch(`<?= base_url('forum/like/') ?>${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const icon = btn.querySelector('i');
+                    const label = btn.querySelector('.like-count');
+                    
+                    label.textContent = `${data.likes_count} Likes`;
+                    if (data.action === 'liked') {
+                        icon.className = 'bi bi-heart-fill text-red-500';
+                        btn.classList.add('text-red-400', 'font-bold');
+                        showToast('Menyukai kiriman!');
+                    } else {
+                        icon.className = 'bi bi-heart';
+                        btn.classList.remove('text-red-400', 'font-bold');
+                        showToast('Batal menyukai.');
+                    }
+                } else {
+                    showToast(data.message);
+                }
+            })
+            .catch(() => showToast('Gagal memproses.'));
+    }
+
+    // Ajax Save Post
+    function savePostDetail(id, btn) {
+        fetch(`<?= base_url('forum/save/') ?>${id}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const icon = btn.querySelector('i');
+                    const label = btn.querySelector('span');
+                    if (data.action === 'saved') {
+                        icon.className = 'bi bi-bookmark-fill text-[#E49438]';
+                        btn.classList.add('text-[#E49438]', 'font-bold');
+                        label.textContent = 'Tersimpan';
+                        showToast('Diskusi disimpan ke penanda!');
+                    } else {
+                        icon.className = 'bi bi-bookmark';
+                        btn.classList.remove('text-[#E49438]', 'font-bold');
+                        label.textContent = 'Simpan';
+                        showToast('Dihapus dari penanda.');
+                    }
+                } else {
+                    showToast(data.message);
+                }
+            })
+            .catch(() => showToast('Gagal menyimpan.'));
+    }
+
+    // Share link copy
+    function sharePostDetail(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Tautan disalin ke papan klip!');
+        }).catch(() => {
+            showToast('Gagal menyalin tautan.');
+        });
     }
 </script>
+
+<?php
+// Helper to print elapsed times (e.g. 13 jam lalu)
+function time_elapsed_string_view($datetime, $full = false) {
+    $now = new DateTime;
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
+
+    $diff->w = floor($diff->d / 7);
+    $diff->d -= $diff->w * 7;
+
+    $string = array(
+        'y' => 'tahun',
+        'm' => 'bulan',
+        'w' => 'minggu',
+        'd' => 'hari',
+        'h' => 'jam',
+        'i' => 'menit',
+        's' => 'detik',
+    );
+    foreach ($string as $k => &$v) {
+        if ($diff->$k) {
+            $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? '' : '');
+        } else {
+            unset($string[$k]);
+        }
+    }
+
+    if (!$full) $string = array_slice($string, 0, 1);
+    return $string ? implode(', ', $string) . ' yang lalu' : 'baru saja';
+}
+?>
