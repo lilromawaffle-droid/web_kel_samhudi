@@ -12,6 +12,24 @@ function fmt_date_pf($date_str, $months_map) {
     $ts = strtotime($date_str);
     return $ts ? date('j', $ts) . ' ' . $months_map[(int)date('n', $ts)] . ' ' . date('Y', $ts) : '-';
 }
+if (!function_exists('time_elapsed_string')) {
+    function time_elapsed_string($datetime, $full = false) {
+        $now = new DateTime();
+        $ago = new DateTime($datetime);
+        $diff = $now->diff($ago);
+        $diff->w = floor($diff->d / 7);
+        $diff->d -= $diff->w * 7;
+        $string = [];
+        $units = ['y'=>'tahun','m'=>'bulan','w'=>'minggu','d'=>'hari','h'=>'jam','i'=>'menit','s'=>'detik'];
+        foreach ($units as $k=>$v) {
+            if ($diff->$k) {
+                $string[$k] = $diff->$k . ' ' . $v;
+            }
+        }
+        if (!$full) $string = array_slice($string,0,1);
+        return $string ? implode(', ', $string) . ' yang lalu' : 'baru saja';
+    }
+}
 ?>
 <!-- Custom Style for Profile -->
 <style>
