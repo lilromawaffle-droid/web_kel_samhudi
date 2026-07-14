@@ -77,19 +77,31 @@ class Admin extends CI_Controller
 
         if ($this->input->method() === 'post' && $this->input->post('upload_banner')) {
             if (!empty($_FILES['banner_file']['name'])) {
-                $config['upload_path'] = $images_path;
-                $config['allowed_types'] = 'jpg|jpeg|png|webp|gif';
-                $config['file_name'] = 'banner_' . time();
-                $this->load->library('upload', $config);
+                $allowed = ['jpg','jpeg','png','webp','gif'];
+                $ext = strtolower(pathinfo($_FILES['banner_file']['name'], PATHINFO_EXTENSION));
 
-                if ($this->upload->do_upload('banner_file')) {
-                    $data = $this->upload->data();
+                if (!in_array($ext, $allowed)) {
+                    $this->session->set_flashdata('banner_error', 'Format file tidak didukung. Gunakan jpg, jpeg, png, webp, atau gif.');
+                    redirect('admin#banner-section');
+                    return;
+                }
+
+                if ($_FILES['banner_file']['size'] > 5 * 1024 * 1024) {
+                    $this->session->set_flashdata('banner_error', 'Ukuran file maksimal 5MB.');
+                    redirect('admin#banner-section');
+                    return;
+                }
+
+                if (!is_dir($images_path)) mkdir($images_path, 0777, true);
+
+                $new_name = 'banner_' . time() . '.' . $ext;
+                if (move_uploaded_file($_FILES['banner_file']['tmp_name'], $images_path . $new_name)) {
                     $current = json_decode(file_get_contents($config_path), true);
-                    $current['file'] = $data['file_name'];
+                    $current['file'] = $new_name;
                     file_put_contents($config_path, json_encode($current));
                     $this->session->set_flashdata('banner_success', 'Banner berhasil diperbarui.');
                 } else {
-                    $this->session->set_flashdata('banner_error', strip_tags($this->upload->display_errors()));
+                    $this->session->set_flashdata('banner_error', 'Gagal upload file. Coba lagi.');
                 }
             } else {
                 $this->session->set_flashdata('banner_error', 'Pilih file gambar terlebih dahulu.');

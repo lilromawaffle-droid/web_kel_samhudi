@@ -232,7 +232,7 @@
 
                 <?php if ($this->session->flashdata('banner_error')): ?>
                 <div class="bg-red-500/20 border border-red-500/40 text-red-200 px-5 py-3 rounded-lg text-sm mb-4">
-                    <?= $this->session->flashdata('error') ?>
+                    <?= $this->session->flashdata('banner_error') ?>
                 </div>
                 <?php endif; ?>
 

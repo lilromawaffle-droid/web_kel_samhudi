@@ -2,7 +2,7 @@
 $banner_config = json_decode(file_get_contents(FCPATH . 'assets/banner-config.json'), true);
 $banner = $banner_config['file'] ?? 'background2.png';
 ?>
-<section class="position-relative d-flex align-items-center justify-content-start text-center bg-hero-section -mt-20" style="padding-top: 80px; background-image: url('<?= base_url('assets/images/' . $banner) ?>');">
+<section class="position-relative d-flex align-items-center justify-content-start text-center bg-hero-section" style="background-image: url('<?= base_url('assets/images/' . $banner) ?>');">
 
     <div class="position-absolute top-0 start-0 w-100 h-100 hero-overlay"></div>
 
