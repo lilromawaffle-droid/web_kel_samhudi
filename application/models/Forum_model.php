@@ -164,6 +164,33 @@ class Forum_model extends CI_Model {
         return $this->db->insert('forum_comments', $data);
     }
 
+    public function delete_comment($comment_id, $user_id)
+    {
+        // Cek kepemilikan komentar
+        $comment = $this->db->get_where('forum_comments', ['id' => $comment_id, 'user_id' => $user_id])->row();
+        if (!$comment) return false;
+
+        $comment_id = (int) $comment_id;
+
+        // Nonaktifkan foreign key checks sementara
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+
+        // Hapus semua reply dari komentar ini
+        $this->db->delete('forum_comments', ['parent_id' => $comment_id]);
+        // Hapus komentar itu sendiri
+        $this->db->delete('forum_comments', ['id' => $comment_id]);
+
+        // Aktifkan kembali foreign key checks
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+
+        return true;
+    }
+
+    public function get_comment_by_id($id)
+    {
+        return $this->db->get_where('forum_comments', ['id' => $id])->row();
+    }
+
     // --- Chat System ---
     public function get_chat_contacts($user_id)
     {
@@ -243,15 +270,66 @@ class Forum_model extends CI_Model {
         return $this->db->update('messages', ['is_read' => 1]);
     }
 
+    public function get_user_forums($user_id, $limit = 20)
+    {
+        $this->db->select('
+            forums.*, 
+            (SELECT COUNT(*) FROM forum_likes WHERE forum_likes.forum_id = forums.id) AS likes_count,
+            (SELECT COUNT(*) FROM forum_comments WHERE forum_comments.forum_id = forums.id) AS comments_count
+        ');
+        $this->db->from('forums');
+        $this->db->where('forums.created_by', $user_id);
+        $this->db->order_by('forums.created_at', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get()->result();
+    }
+
+    public function get_user_comments($user_id, $limit = 20)
+    {
+        $this->db->select('forum_comments.*, forums.title AS forum_title, forums.id AS forum_id');
+        $this->db->from('forum_comments');
+        $this->db->join('forums', 'forums.id = forum_comments.forum_id', 'left');
+        $this->db->where('forum_comments.user_id', $user_id);
+        $this->db->where('forum_comments.parent_id IS NULL');
+        $this->db->order_by('forum_comments.created_at', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get()->result();
+    }
+
     public function delete_forum($id)
     {
+        $id = (int) $id;
+
+        // Nonaktifkan foreign key checks sementara
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+
         // Delete related likes
         $this->db->delete('forum_likes', ['forum_id' => $id]);
         // Delete related saves
         $this->db->delete('forum_saves', ['forum_id' => $id]);
-        // Delete related comments
+        // Delete related comments (including replies)
         $this->db->delete('forum_comments', ['forum_id' => $id]);
         // Delete the forum post itself
-        return $this->db->delete('forums', ['id' => $id]);
+        $result = $this->db->delete('forums', ['id' => $id]);
+
+        // Aktifkan kembali foreign key checks
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+
+        return $result;
+    }
+
+    public function get_user_liked_forums($user_id, $limit = 20)
+    {
+        $this->db->select('
+            forums.*, 
+            (SELECT COUNT(*) FROM forum_likes WHERE forum_likes.forum_id = forums.id) AS likes_count,
+            (SELECT COUNT(*) FROM forum_comments WHERE forum_comments.forum_id = forums.id) AS comments_count
+        ');
+        $this->db->from('forum_likes');
+        $this->db->join('forums', 'forums.id = forum_likes.forum_id', 'inner');
+        $this->db->where('forum_likes.user_id', $user_id);
+        $this->db->order_by('forum_likes.created_at', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get()->result();
     }
 }

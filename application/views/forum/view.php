@@ -150,6 +150,11 @@
                                         <button onclick="toggleReplyForm(<?= $comment->id ?>)" class="text-[10px] font-bold text-teal-300 hover:text-white transition-all flex items-center gap-1">
                                             <i class="bi bi-reply"></i> Balas
                                         </button>
+                                        <?php if ($user && $comment->user_id == $user->id): ?>
+                                        <button onclick="deleteComment(<?= $comment->id ?>, this)" class="text-[10px] font-bold text-red-400 hover:text-red-300 transition-all flex items-center gap-1">
+                                            <i class="bi bi-trash3"></i> Hapus
+                                        </button>
+                                        <?php endif; ?>
                                     </div>
 
                                     <!-- Inline Reply Form -->
@@ -183,6 +188,13 @@
                                                         <p class="text-xs text-white/70 mt-1 leading-relaxed whitespace-pre-line">
                                                             <?= htmlspecialchars($reply->comment) ?>
                                                         </p>
+                                                        <?php if ($user && $reply->user_id == $user->id): ?>
+                                                        <div class="mt-1">
+                                                            <button onclick="deleteComment(<?= $reply->id ?>, this)" class="text-[10px] font-bold text-red-400 hover:text-red-300 transition-all flex items-center gap-1">
+                                                                <i class="bi bi-trash3"></i> Hapus
+                                                            </button>
+                                                        </div>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
@@ -290,6 +302,46 @@
         }).catch(() => {
             showToast('Gagal menyalin tautan.');
         });
+    }
+
+    // Delete comment (AJAX)
+    function deleteComment(commentId, btn) {
+        if (!confirm('Hapus komentar ini?')) return;
+
+        // Cari parent comment card
+        const card = btn.closest('.flex.items-start');
+        if (card) {
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+        }
+
+        fetch(`<?= base_url('forum/delete_comment/') ?>${commentId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.maxHeight = '0';
+                        card.style.overflow = 'hidden';
+                        setTimeout(() => card.remove(), 350);
+                    }
+                    showToast('Komentar berhasil dihapus.');
+                } else {
+                    if (card) {
+                        card.style.opacity = '1';
+                        card.style.pointerEvents = 'auto';
+                    }
+                    showToast(data.message || 'Gagal menghapus komentar.');
+                }
+            })
+            .catch(() => {
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+                showToast('Terjadi kesalahan, coba lagi.');
+            });
     }
 </script>
 
