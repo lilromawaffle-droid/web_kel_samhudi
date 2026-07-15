@@ -63,7 +63,18 @@ class Forum extends CI_Controller {
 
         // Process media upload
         if (!empty($_FILES['media']['name'])) {
+            if ($_FILES['media']['error'] !== UPLOAD_ERR_OK) {
+                $error_msg = 'Gagal mengunggah file. Kode Error: ' . $_FILES['media']['error'];
+                if ($_FILES['media']['error'] === UPLOAD_ERR_INI_SIZE) {
+                    $error_msg = 'Ukuran file melebihi batas upload server (upload_max_filesize di php.ini).';
+                }
+                $this->session->set_flashdata('error_msg', $error_msg);
+                redirect('forum');
+                return;
+            }
+
             $upload_path = FCPATH . 'assets/uploads/forum/';
+            $upload_path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $upload_path);
             if (!is_dir($upload_path)) {
                 mkdir($upload_path, 0777, true);
             }
@@ -83,6 +94,12 @@ class Forum extends CI_Controller {
                 } elseif (in_array($file_ext, $video_exts)) {
                     $media_type = 'video';
                 }
+            } else {
+                $last_error = error_get_last();
+                $sys_err = isset($last_error['message']) ? ' (Sistem: ' . $last_error['message'] . ')' : '';
+                $this->session->set_flashdata('error_msg', 'Gagal memindahkan file ke direktori tujuan. Pastikan folder assets/uploads/forum writeable.' . $sys_err);
+                redirect('forum');
+                return;
             }
         }
 
@@ -327,5 +344,25 @@ class Forum extends CI_Controller {
         $this->Forum_model->delete_forum($id);
         $this->session->set_flashdata('success_msg', 'Postingan berhasil dihapus!');
         redirect('forum');
+    }
+
+    // Delete a comment (user can only delete their own)
+    public function delete_comment($comment_id)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $user_id = $this->get_logged_user_id();
+        if (!$user_id) {
+            echo json_encode(['status' => 'error', 'message' => 'Silakan login terlebih dahulu.']);
+            return;
+        }
+
+        $result = $this->Forum_model->delete_comment($comment_id, $user_id);
+
+        if ($result) {
+            echo json_encode(['status' => 'success', 'message' => 'Komentar berhasil dihapus.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Tidak dapat menghapus komentar ini.']);
+        }
     }
 }

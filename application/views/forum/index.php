@@ -397,6 +397,7 @@
 
 <!-- SCRIPTS FOR INLINE AND REALTIME CHAT -->
 <script>
+    const CURRENT_USER_ID = <?= (int) $this->session->userdata('user_id') ?>;
     let activeChatUserId = null;
     let chatRefreshInterval = null;
     let allContacts = [];
@@ -580,15 +581,24 @@
 
                 let html = '';
                 comments.forEach(c => {
+                    const canDeleteComment = (CURRENT_USER_ID && parseInt(c.user_id) === CURRENT_USER_ID);
+                    const deleteCommentBtn = canDeleteComment
+                        ? `<button type="button" onclick="deleteCommentInline(${c.id}, ${forumId}, this)" class="text-[9px] text-red-400 hover:text-red-300 hover:underline ml-2 mt-1.5 font-bold transition-all"><i class="bi bi-trash3"></i> Hapus</button>`
+                        : '';
+
                     html += `
-                        <div class="bg-[#0d1314]/30 p-2.5 rounded-xl border border-[#374D49]/10 text-xs">
+                        <div class="bg-[#0d1314]/30 p-2.5 rounded-xl border border-[#374D49]/10 text-xs" data-comment-id="${c.id}">
                             <div class="flex items-center gap-2 mb-1">
                                 <img src="${c.avatar_url}" class="w-5 h-5 rounded-full object-cover">
                                 <span class="font-bold text-white">${c.author_name}</span>
                                 <span class="text-[9px] text-[#B1CDCE]/50">${c.created_at}</span>
                             </div>
                             <p class="text-[#B1CDCE] ml-7 leading-relaxed">${c.comment}</p>
-                            <button type="button" onclick="startReply(${forumId}, ${c.id}, '${c.author_name.replace(/'/g, "\\'")}')" class="text-[9px] text-[#E49438] hover:underline ml-7 mt-1.5 font-bold transition-all">Balas</button>
+                            <div class="ml-7 flex items-center gap-2">
+                                <button type="button" onclick="startReply(${forumId}, ${c.id}, '${c.author_name.replace(/'/g, "\\'")}')"
+                                    class="text-[9px] text-[#E49438] hover:underline mt-1.5 font-bold transition-all">Balas</button>
+                                ${deleteCommentBtn}
+                            </div>
                         </div>
                     `;
 
@@ -596,14 +606,20 @@
                     if (c.replies && c.replies.length > 0) {
                         html += `<div class="border-l-2 border-[#374D49]/30 ml-5 pl-4 space-y-2 mt-1.5">`;
                         c.replies.forEach(r => {
+                            const canDeleteReply = (CURRENT_USER_ID && parseInt(r.user_id) === CURRENT_USER_ID);
+                            const deleteReplyBtn = canDeleteReply
+                                ? `<button type="button" onclick="deleteCommentInline(${r.id}, ${forumId}, this)" class="text-[9px] text-red-400 hover:text-red-300 hover:underline ml-6 mt-1 font-bold transition-all block"><i class="bi bi-trash3"></i> Hapus</button>`
+                                : '';
+
                             html += `
-                                <div class="bg-[#0d1314]/15 p-2 rounded-xl border border-[#374D49]/5 text-xs shadow-sm">
+                                <div class="bg-[#0d1314]/15 p-2 rounded-xl border border-[#374D49]/5 text-xs shadow-sm" data-comment-id="${r.id}">
                                     <div class="flex items-center gap-2 mb-1">
                                         <img src="${r.avatar_url}" class="w-4 h-4 rounded-full object-cover">
                                         <span class="font-bold text-white">${r.author_name}</span>
                                         <span class="text-[9px] text-[#B1CDCE]/50">${r.created_at}</span>
                                     </div>
                                     <p class="text-[#B1CDCE] ml-6 leading-relaxed">${r.comment}</p>
+                                    ${deleteReplyBtn}
                                 </div>
                             `;
                         });
@@ -672,6 +688,53 @@
                 countSpan.textContent = parseInt(countSpan.textContent) + 1;
             }
         });
+    }
+
+    // Delete comment inline (AJAX)
+    function deleteCommentInline(commentId, forumId, btn) {
+        if (!confirm('Hapus komentar ini?')) return;
+
+        const card = btn.closest('[data-comment-id]');
+        if (card) {
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+        }
+
+        fetch(`<?= base_url('forum/delete_comment/') ?>${commentId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.maxHeight = '0';
+                        card.style.overflow = 'hidden';
+                        setTimeout(() => {
+                            card.remove();
+                            // Update comment count
+                            const countSpan = document.getElementById(`comment-count-${forumId}`);
+                            if (countSpan) {
+                                const current = parseInt(countSpan.textContent);
+                                if (current > 0) countSpan.textContent = current - 1;
+                            }
+                        }, 350);
+                    }
+                    showToast('Komentar berhasil dihapus.');
+                } else {
+                    if (card) {
+                        card.style.opacity = '1';
+                        card.style.pointerEvents = 'auto';
+                    }
+                    showToast(data.message || 'Gagal menghapus komentar.');
+                }
+            })
+            .catch(() => {
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+                showToast('Terjadi kesalahan, coba lagi.');
+            });
     }
 
     // Load Chat Contacts
