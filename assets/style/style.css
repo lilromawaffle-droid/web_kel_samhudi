@@ -1,3 +1,9 @@
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Body & Typography */
 .body-main {
     background-color: #F5EBE2;
@@ -172,6 +178,7 @@
 .carousel-section {
     padding: 80px 0;
     background: linear-gradient(to bottom, #8F9F9F 0%, #8F9F9F 30%, #274D4F 30%, #274D4F 100%);
+    overflow: hidden;
 }
 
 .carousel-container {
