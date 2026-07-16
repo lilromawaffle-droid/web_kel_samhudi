@@ -1,14 +1,14 @@
 <?php $is_home = !$this->uri->segment(1); ?>
 <nav class="navbar-custom bg-[#274d4f] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.3)]">
-    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-x-16">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between xl:gap-x-12 lg:gap-x-6 md:gap-x-4 gap-x-2">
 
-        <div class="font-display font-bold text-lg tracking-tight leading-none flex items-center gap-2" style="color: #C8A84E;">
+        <div class="font-display font-bold text-lg tracking-tight leading-none flex items-center gap-2 flex-shrink-0" style="color: #C8A84E;">
             <img src="<?= base_url('assets/images/icon-beringin.png') ?>" alt="" style="height: 28px; width: auto; flex-shrink: 0;">
             HM Samhudi
         </div>
 
         <!-- Desktop Menu -->
-        <ul class="hidden md:flex items-center gap-10 font-display font-semibold text-base tracking-wide text-white/90">
+        <ul class="hidden md:flex items-center xl:gap-8 lg:gap-5 md:gap-3 font-display font-semibold text-sm lg:text-base tracking-wide text-white/90 whitespace-nowrap">
             <li>
                 <a href="<?= base_url() ?>" class="relative py-2 hover:text-white transition-colors duration-300 group">
                     Home
@@ -54,9 +54,9 @@
             </button>
             <?php if ($this->session->userdata('logged_in')): ?>
             <div id="desktop-user-menu" class="relative cursor-pointer select-none group">
-                <div id="user-pill" class="flex items-center gap-4 bg-white hover:bg-gray-100 px-5 py-2.5 rounded-full transition-all duration-200">
-                    <i id="user-pill-icon" class="bi bi-person-fill text-[#274d4f] text-base"></i>
-                    <span id="user-pill-text" class="font-display font-semibold text-sm text-[#274d4f]">
+                <div id="user-pill" class="flex items-center gap-2 bg-white hover:bg-gray-100 px-5 py-2.5 rounded-full transition-all duration-200" title="<?= htmlspecialchars($this->session->userdata('full_name')) ?>">
+                    <i id="user-pill-icon" class="bi bi-person-fill text-[#274d4f] text-base flex-shrink-0"></i>
+                    <span id="user-pill-text" class="font-display font-semibold text-sm text-[#274d4f] max-w-[120px] truncate">
                         <?= $this->session->userdata('full_name') ?>
                     </span>
                 </div>
@@ -139,6 +139,16 @@
             <li>
                 <a href="<?= base_url('Berita') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="berita"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><?php if ($this->session->userdata('logged_in')): ?><i class="bi bi-newspaper mr-2"></i><?php endif; ?>Berita</a>
             </li>
+        <?php if ($this->session->userdata('logged_in')): ?>
+            <?php if (in_array($this->session->userdata('role'), ['admin', 'super_admin'])): ?>
+            <li>
+                <a href="<?= base_url('admin') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="admin"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><i class="bi bi-speedometer2 mr-2"></i>Dashboard</a>
+            </li>
+            <?php endif; ?>
+            <li>
+                <a href="<?= base_url('profile') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="profile"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><i class="bi bi-pencil-square mr-2"></i>Edit Profil</a>
+            </li>
+        <?php endif; ?>
         <?php if (!$this->session->userdata('logged_in')): ?>
             <li class="px-6 pt-2">
                 <hr class="border-white/20 mb-3">
